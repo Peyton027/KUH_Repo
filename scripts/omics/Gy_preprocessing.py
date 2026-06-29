@@ -1,7 +1,10 @@
+# A general script for galaxy preprocessing - strips unnessacary data 
+
 import pandas as pd
 
 raw = pd.read_csv("RNA-seq_raw.csv")
 
+# input desired cohorts 
 normal_samples = ["N1", "N3", "N4", "N5", "N6", "N7", "N8", "N9", "N10"]
 hf_samples = ["HF1", "HF2", "HF3", "HF4", "HF5", "HF6", "HF7", "HF8", "HF9", "HF10"]
 
