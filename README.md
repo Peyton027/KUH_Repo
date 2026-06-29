@@ -1,2 +1,2 @@
-# SPURRS-
+# SPURRS
 KUH Undergraduate Symposium
