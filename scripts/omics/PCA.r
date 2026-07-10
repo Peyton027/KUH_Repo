@@ -5,6 +5,9 @@ library(ggplot2)
 
 # load data 
 raw_rna <- read.csv("RNA_ion_channels.csv")
+rownames(raw_rna) <- raw_rna$gene_id
+raw_rna <- raw_rna[, -1]
+
 head(raw_rna)
 dim(raw_rna)
 
@@ -16,13 +19,14 @@ dim(rna)
 head(rna)
 
 
+
 #normalize
 
 smpl_size <-colSums(rna)
 rna_cpm <-t(t(rna)/smpl_size *1000000)
 
 #log2 transform 
-rna_log <- log2(rna + 1)
+rna_log <- log2(rna_cpm + 1)
 
 #transpose matrix 
 pca <- prcomp(t(rna_log), scale. = TRUE)
