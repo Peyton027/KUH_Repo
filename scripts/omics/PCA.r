@@ -1,15 +1,20 @@
-{r}
-
 library(factoextra)
 library(MASS)
 library(dplyr)
 library(ggplot2)
+library(edgeR)
 
 # load all genes
-all_rna <- read.csv("RNA seq raw file.csv")
+all_rna <- read.csv(
+  "RNA seq raw file.csv",
+  check.names = FALSE
+)
 
 # load ion-channel genes
-ion <- read.csv("RNA_ion_channels.csv")
+ion <- read.csv(
+  "RNA_ion_channels.csv",
+  check.names = FALSE
+)
 
 # save gene id as row names
 rownames(all_rna) <- all_rna$gene_id
@@ -22,27 +27,50 @@ sample_names <- colnames(ion)[-1]
 all_rna <- all_rna[, sample_names]
 ion <- ion[, sample_names]
 
-# find library size using all genes
-smpl_size <- colSums(all_rna)
+# make sure counts are numeric
+all_rna[] <- lapply(all_rna, as.numeric)
+ion[] <- lapply(ion, as.numeric)
 
-# normalize ion-channel genes
-rna_cpm <- t(t(ion) / smpl_size * 1000000)
+# create edgeR object using all genes
+dge <- DGEList(counts = all_rna)
 
-# log2 transform
-rna_log <- log2(rna_cpm + 1)
+# calculate TMM normalization factors using all genes
+dge <- calcNormFactors(
+  dge,
+  method = "TMM"
+)
+
+# calculate TMM-normalized log2 CPM for all genes
+rna_log_all <- cpm(
+  dge,
+  log = TRUE,
+  prior.count = 2
+)
+
+# find ion-channel genes present in the complete RNA-seq file
+ion_genes <- intersect(
+  rownames(ion),
+  rownames(rna_log_all)
+)
+
+# keep only ion-channel genes
+rna_log <- rna_log_all[ion_genes, ]
 
 # get rid of 0 variance genes
-genes <- apply(rna_log, 1, var, na.rm = TRUE) != 0
+genes <- apply(
+  rna_log,
+  1,
+  var,
+  na.rm = TRUE
+) != 0
+
 rna_log <- rna_log[genes, ]
 
 dim(rna_log)
 head(rna_log)
 
-# transpose matrix
-pca <- prcomp(
-  t(rna_log),
-  scale. = TRUE
-)
+# transpose matrix and perform PCA
+pca <- prcomp(t(rna_log),scale. = TRUE)
 
 # add condition class
 sample_names <- rownames(pca$x)
@@ -67,5 +95,3 @@ fviz_pca_ind(
   addEllipses = TRUE,
   repel = TRUE
 )
-
-
